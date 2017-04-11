@@ -63,10 +63,13 @@ int init_alice(void)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,2,0)
     gnttab_set_map_op(&ops, (unsigned long)v_start->addr, GNTMAP_host_map,
             info.gref, info.domid);
+   //actually here can use following statements   
 #else
     memset(&ops, 0, sizeof(ops));
     ops.host_addr = (unsigned long)v_start->addr;
     ops.flags = GNTMAP_host_map;
+    ops.ref = info.gref;
+    ops.dom = info.domid;
 #endif
     if ( HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &ops, 1) ) {
         pr_err("Alice: HYPERVISOR map grant ref failed\n");
