@@ -13,8 +13,12 @@
 #include <linux/kernel.h>
 #include <linux/types.h>
 #include <linux/gfp.h>
-
+#include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,2,0)
 #include <asm/xen/page.h>
+#else
+#include <asm/page.h>
+#endif
 
 #include <xen/interface/xen.h>
 #include <xen/grant_table.h>

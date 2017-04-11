@@ -19,7 +19,7 @@
 #include <linux/moduleparam.h>
 #include <linux/kernel.h>
 #include <linux/vmalloc.h>
-
+#include <linux/version.h>
 #include <xen/grant_table.h>
 #include <xen/interface/grant_table.h>
 #include <asm/xen/hypercall.h>
@@ -48,7 +48,11 @@ int init_alice(void)
 
     /* Reserve a range of kernel address space, fill page table to map this range 
      * This PAGE_SIZE is used for map granted page */
-    v_start = alloc_vm_area(PAGE_SIZE, NULL);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,2,0)
+     v_start = alloc_vm_area(PAGE_SIZE, NULL);
+#else
+    v_start = alloc_vm_area(PAGE_SIZE);
+#endif
     if ( v_start == 0 ) {
         free_vm_area(v_start);
         pr_err("Alice: could not allocate page area\n");
@@ -56,8 +60,14 @@ int init_alice(void)
     }
 
     /* Init map ops */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,2,0)
     gnttab_set_map_op(&ops, (unsigned long)v_start->addr, GNTMAP_host_map,
             info.gref, info.domid);
+#else
+    memset(&ops, 0, sizeof(ops));
+    ops.host_addr = (unsigned long)v_start->addr;
+    ops.flags = GNTMAP_host_map;
+#endif
     if ( HYPERVISOR_grant_table_op(GNTTABOP_map_grant_ref, &ops, 1) ) {
         pr_err("Alice: HYPERVISOR map grant ref failed\n");
         return 0;
